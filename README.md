@@ -3,3 +3,7 @@
 受け渡しと、解放がめんどい   
 
 ※ディレクトリがOpenGLなのに中身はdirectx11なのはご愛敬。同じディレクトリで色々実験してるんで(^^;  
+  
+おまけ  
+
+<img width="822" height="744" alt="無題" src="https://github.com/user-attachments/assets/2da27e29-9c48-4d4d-9c2f-0600ef07cdbc" />
