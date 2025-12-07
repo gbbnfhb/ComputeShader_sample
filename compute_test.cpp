@@ -3,6 +3,7 @@
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
+#include <vector>
 
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib,"d3dcompiler.lib")
@@ -26,6 +27,7 @@ static ID3D11Buffer* CreateStructuredBuffer(ID3D11Device* device, const void* da
     bufDesc.BindFlags = bindFlags;
     bufDesc.StructureByteStride = sizeof(BufType);
     bufDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	bufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;  
 
     D3D11_SUBRESOURCE_DATA initData = {};
     initData.pSysMem = data;
@@ -114,6 +116,7 @@ void exec_shader(ID3D11Device* device,ID3D11DeviceContext* context,ID3D11Compute
     // スレッドグループ数を指定（要素数 = 2）
     context->Dispatch(2, 1, 1);
 
+
 //--------------- get_result
 
 	// CPU からアクセスできるステージングバッファを作成
@@ -141,6 +144,36 @@ void exec_shader(ID3D11Device* device,ID3D11DeviceContext* context,ID3D11Compute
         printf("Result[%d] = i:%d f:%f\n", i, result[i].i, result[i].f);
     }
     context->Unmap(stagingBuffer, 0);
+
+//内容を変えてもう一度
+	input0[0] =  {11, 12.0f};
+	input0[1] =  {15, 14.0f};
+	input1[0] =  {10, 11.0f};
+	input1[1] =  {12, 13.0f};
+
+	//gpuの内容をupdate
+	context->UpdateSubresource(inputBuffer0, 0, nullptr, input0, 0, 0);
+	context->UpdateSubresource(inputBuffer1, 0, nullptr, input1, 0, 0);
+
+	// スレッドグループ数を指定（要素数 = 2）
+	context->Dispatch(2, 1, 1);
+
+
+
+	// GPU → CPU にコピー
+	context->CopyResource(stagingBuffer, outputBuffer);
+
+	// マップして読み出し
+	context->Map(stagingBuffer, 0, D3D11_MAP_READ, 0, &mapped);
+	// BufType として読み出す
+	result = reinterpret_cast<BufType*>(mapped.pData);
+
+	// 結果確認（2 要素）
+	for (int i = 0; i < 2; i++) {
+		printf("Result[%d] = i:%d f:%f\n", i, result[i].i, result[i].f);
+	}
+	context->Unmap(stagingBuffer, 0);
+
 
 /*
 	必要なくなったら解放
